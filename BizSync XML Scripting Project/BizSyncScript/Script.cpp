@@ -1,3 +1,18 @@
+/**
+   --------------------------------------------------------------
+   | Copyright 2015 Patio Pacific. All rights reserved.         |
+   | Use of this source code is governed by a BSD-style license |
+   | that can be found in the LICENSE file.                     |
+   --------------------------------------------------------------
+
+Before you dive into this script, you should probably review two things:
+1. The SOP on the BizSync script.
+2. Go look at one of the order.xml files (you can find hundreds in the backup folder on the remote server)
+The source code will make more sense if you do (maybe)
+
+*/
+
+
 #include "tinyxml2.h"
 #include <string>
 #include <cstring>
@@ -16,6 +31,12 @@ const char* badProductID[] = {"12BW", "fg", "01HS", "01PP", "01RI", "06HS", "02S
 //Virtual Functions
 void setHold(tinyxml2::XMLNode *Node);
 
+/** Function that returns true if string base starts
+ *  with string sequence.
+ *  Example:
+ *  Base = "This is a test"
+ *  Sequence = "Thi"
+ */
 bool startsWith(const char* base, char* sequence) {
     if(strlen(sequence) > strlen(base)) {
         return false;
@@ -29,12 +50,19 @@ bool startsWith(const char* base, char* sequence) {
     return true;
 }
 
+/** Returns the time in a nice format.
+ */
+
 char* getTime(const struct tm *timeptr) {
   static char result[26];
   sprintf(result, "%.2d:%.2d",
     timeptr->tm_hour, timeptr->tm_min);
   return result;
 }
+
+/** A function I wrote to help name the backup files.
+ *  Same premise as above.
+ */
 
 char* myAsctime(const struct tm *timeptr) {
   static const char mon_name[][4] = {
@@ -50,6 +78,8 @@ char* myAsctime(const struct tm *timeptr) {
   return result;
 }
 
+/** This function removes all the white space from a string */
+
 char* trim(const char *input) {
     int i, j;
     char *output = (char*)malloc(strlen(input));
@@ -64,6 +94,8 @@ char* trim(const char *input) {
     output[j] = '\0';
     return output;
 }
+
+/** This function converts a string input into all uppercase characters */
 
 char* toUpperString(const char *input) {
     int i = 0;
@@ -82,10 +114,10 @@ bool check_hold(tinyxml2::XMLNode *Node) {
     bool multiFlag = false;
     tinyxml2::XMLNode *tempNode;
     const char* tempString;
-    //Check the products for badProducts
+    /** Select the first product from the order*/
     tempNode = Node->FirstChildElement("product01");
 
-    /* This loop goes over each of the product numbers to
+    /** This loop goes over each of the product numbers to
     make sure that there is not a product complication or
     sku that needs to be reviewed before being shipped out. */
 
@@ -96,7 +128,7 @@ bool check_hold(tinyxml2::XMLNode *Node) {
             break;
         }
 
-        /*This check is to see if someone buys a wall-mount with any other
+        /** This check is to see if someone buys a wall-mount with any other
         product. We place these orders on hold and review them to make sure that
         the customer is getting the right products together */
 
@@ -111,7 +143,7 @@ bool check_hold(tinyxml2::XMLNode *Node) {
             return true;
         }
 
-        /* This the skus in the loop can easily be modified to
+        /** This the skus in the loop can easily be modified to
         acomidate additional skus. There are definitions at the
         top of this document */
 
@@ -125,12 +157,20 @@ bool check_hold(tinyxml2::XMLNode *Node) {
             }
         }
 
+        /** The following two lines skip skip the quantity part of the xml file
+        and go to the next product. */
+
         tempNode = tempNode->NextSibling();
         tempNode = tempNode->NextSibling();
     }
 
+    /** After checking over each of the product, it's time to move onto other reasons we'd like to place
+    all the orders on hold. If there is no "last name" in the order, that means that someone ordered more
+    than 5 products, and we should just ignore searching for shipping. */
+
     if((Node->FirstChildElement("lastname"))) {
         bool ship_conflic = false;
+
 
         if((char*)Node->FirstChildElement("shipvia")->GetText()) {
             bool isInternational = strcmp(Node->FirstChildElement("scountry")->GetText(), "001") == 0 ? false : true;
