@@ -37,3 +37,25 @@
 	<stddef.h>
 	<cstddef>
 
+1424375338 source:c:\users\sdaily\bizsyncscript\bizsync xml scripting project\bizsyncscript\tinyxml2.cpp
+	"tinyxml2.h"
+	<new>
+	<stddef.h>
+	<cstddef>
+
+1424375338 c:\users\sdaily\bizsyncscript\bizsync xml scripting project\bizsyncscript\tinyxml2.h
+	<ctype.h>
+	<limits.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdarg.h>
+	<cctype>
+	<climits>
+	<cstdio>
+	<cstdlib>
+	<cstring>
+	<cstdarg>
+	<android/log.h>
+	<assert.h>
+

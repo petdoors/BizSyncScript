@@ -258,7 +258,7 @@ int main() {
     char filename[200];
 
     while(true) {
-
+        Sleep(1000);
         time(&rawtime);
         timeinfo = localtime(&rawtime);
         if((timeinfo->tm_min) % 20 == 0) {
