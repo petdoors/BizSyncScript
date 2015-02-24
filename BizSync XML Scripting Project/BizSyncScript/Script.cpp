@@ -271,11 +271,11 @@ int main() {
         Sleep(1000);
         time(&rawtime);
         timeinfo = localtime(&rawtime);
-        if(true) {//(timeinfo->tm_min) % 20 == 0) {
+        if((timeinfo->tm_min) % 20 == 0) {
             printf("Script Starting at %s\n\n", getTime(timeinfo));
 
             printf("Running Download....\n");
-            //system("bizsyncxlc.exe.lnk");
+            system("bizsyncxlc.exe.lnk");
 
             if(fexists("orders.xml")) {
                 myDoc.LoadFile("orders.xml");
