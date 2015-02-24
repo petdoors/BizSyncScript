@@ -21,6 +21,7 @@ The source code will make more sense if you do (maybe)
 #include <stdlib.h>
 #include <windows.h>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 #define NUM_PRODUCTS_TO_CHECK_FOR 12
@@ -37,12 +38,14 @@ void setHold(tinyxml2::XMLNode *Node);
  *  Base = "This is a test"
  *  Sequence = "Thi"
  */
-bool startsWith(const char* base, char* sequence) {
+bool startsWith(char* base, char* sequence) {
     if(strlen(sequence) > strlen(base)) {
         return false;
     }
 
-    for(int i = 0; i < strlen(sequence); i++) {
+    int stringSize = strlen(sequence);
+
+    for(int i = 0; i < stringSize; i++) {
         if(base[i] != sequence[i]) {
             return false;
         }
@@ -81,39 +84,28 @@ char* myAsctime(const struct tm *timeptr) {
 /** This function removes all the white space from a string */
 
 char* trim(const char *input) {
-    int i, j;
-    char *output = (char*)malloc(strlen(input));
-    for (i = 0, j = 0; i < strlen(input); i++,j++) {
-        if (!isspace(input[i])) {
-            output[j] = input[i];
-        }
-        else {
-            j--;
-        }
-    }
-    output[j] = '\0';
-    return output;
+    string s(input);
+    s.erase( remove_if( s.begin(), s.end(), ::isspace ), s.end() );
+
+    return strdup(s.c_str());
 }
 
 /** This function converts a string input into all uppercase characters */
 
-char* toUpperString(const char *input) {
-    int i = 0;
-    char *output = (char*)malloc(strlen(input));
+char* toUpperString(char *input) {
+    string s(input);
+    transform(s.begin(), s.end(), s.begin(), ::toupper);
 
-
-    while(i < strlen(input)) {
-        output[i] = toupper(input[i]);
-        i++;
-    }
-    output[i-1] = '\0';
-    return output;
+    return strdup(s.c_str());
 }
 
 bool check_hold(tinyxml2::XMLNode *Node) {
     bool multiFlag = false;
     tinyxml2::XMLNode *tempNode;
-    const char* tempString;
+    char* tempString;
+    const char* XMLString;
+    int stringSize;
+
     /** Select the first product from the order*/
     tempNode = Node->FirstChildElement("product01");
 
@@ -122,11 +114,16 @@ bool check_hold(tinyxml2::XMLNode *Node) {
     sku that needs to be reviewed before being shipped out. */
 
     for(int i = 0; i < 5; i++) {
-        tempString = tempNode->ToElement()->GetText();
+        XMLString = tempNode->ToElement()->GetText();
 
-        if(!tempString) {
+
+        if(!XMLString) {
             break;
         }
+
+        stringSize = strlen(XMLString);
+        tempString = (char*)malloc(stringSize);
+        memcpy(tempString, XMLString, stringSize);
 
         /** This check is to see if someone buys a wall-mount with any other
         product. We place these orders on hold and review them to make sure that
@@ -150,7 +147,7 @@ bool check_hold(tinyxml2::XMLNode *Node) {
 
         for(int a = 0; a < NUM_PRODUCTS_TO_CHECK_FOR; a++) {
             const char* prodID = badProductID[a];
-            if(tempString && strstr(toUpperString(tempString), prodID)) {
+            if(tempString && strstr(tempString, prodID)) {
                 setHold(Node);
                 printf("Flagged Sku.\n");
                 return true;
@@ -162,6 +159,7 @@ bool check_hold(tinyxml2::XMLNode *Node) {
 
         tempNode = tempNode->NextSibling();
         tempNode = tempNode->NextSibling();
+        free(tempString);
     }
 
     /** After checking over each of the product, it's time to move onto other reasons we'd like to place
@@ -176,13 +174,13 @@ bool check_hold(tinyxml2::XMLNode *Node) {
 
             /** isInternational just checks to see if the shipping code is within the united states or not. */
             bool isInternational = strcmp(Node->FirstChildElement("scountry")->GetText(), "001") == 0 ? false : true;
-            char* temp_data;
+            const char* temp_data;
 
             /** Copy shipping address data into a local variable */
-            temp_data = (char*)Node->FirstChildElement("saddress1")->GetText();
+            temp_data = Node->FirstChildElement("saddress1")->GetText();
             char* address = (char*)malloc(strlen(temp_data));
             memcpy(address, temp_data, strlen(temp_data));
-            address = toUpperString(trim((const char*) address));
+            address = toUpperString(trim(address));
 
             /** Copy shipping method data into a local variable */
             temp_data = (char*)Node->FirstChildElement("shipvia")->GetText();
@@ -217,7 +215,7 @@ bool check_hold(tinyxml2::XMLNode *Node) {
 
 void setHold(tinyxml2::XMLNode *Node){
     int year, month, day;
-    char holdDate[20];
+    char holdDate[30];
     char* workString;
 
     /**get the order date element and get the text. */
@@ -273,11 +271,11 @@ int main() {
         Sleep(1000);
         time(&rawtime);
         timeinfo = localtime(&rawtime);
-        if((timeinfo->tm_min) % 20 == 0) {
+        if(true) {//(timeinfo->tm_min) % 20 == 0) {
             printf("Script Starting at %s\n\n", getTime(timeinfo));
 
             printf("Running Download....\n");
-            system("bizsyncxlc.exe.lnk");
+            //system("bizsyncxlc.exe.lnk");
 
             if(fexists("orders.xml")) {
                 myDoc.LoadFile("orders.xml");
