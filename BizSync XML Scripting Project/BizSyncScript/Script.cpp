@@ -171,21 +171,29 @@ bool check_hold(tinyxml2::XMLNode *Node) {
     if((Node->FirstChildElement("lastname"))) {
         bool ship_conflic = false;
 
-
+        /** We first check to make sure that the "shipvia" field in the XML document is not empty. */
         if((char*)Node->FirstChildElement("shipvia")->GetText()) {
+
+            /** isInternational just checks to see if the shipping code is within the united states or not. */
             bool isInternational = strcmp(Node->FirstChildElement("scountry")->GetText(), "001") == 0 ? false : true;
             char* temp_data;
 
+            /** Copy shipping address data into a local variable */
             temp_data = (char*)Node->FirstChildElement("saddress1")->GetText();
             char* address = (char*)malloc(strlen(temp_data));
             memcpy(address, temp_data, strlen(temp_data));
             address = toUpperString(trim((const char*) address));
 
+            /** Copy shipping method data into a local variable */
             temp_data = (char*)Node->FirstChildElement("shipvia")->GetText();
             char* shipMethod = (char*)malloc(strlen(temp_data));
             memcpy(shipMethod, temp_data, strlen(temp_data));
 
+            /** This is a rather long and complicated if statement, so I'll try to break it down.
+                IF the order is being shipped internationally using Prioty Mail, OR
+                IF the shipping method is 1 Day Ground, FedEx Standard Overnight, or FedEx 2 Day Air
 
+                Put the order on hold. */
             if((isInternational && strcmp(shipMethod, "PM") != 0) ||
             (strstr(address, "POBOX") && (strcmp(shipMethod, "1GD") == 0 ||
             strcmp(shipMethod, "FES") == 0 || strcmp(shipMethod, "FE2") == 0))) {
@@ -212,27 +220,28 @@ void setHold(tinyxml2::XMLNode *Node){
     char holdDate[20];
     char* workString;
 
-    //get the order date element and get the text.
+    /**get the order date element and get the text. */
     tinyxml2::XMLNode *tempNode = Node->FirstChildElement("order_date");
     const char* tempString = tempNode->ToElement()->GetText();
 
-    //transfer it to a non-const string
+    /**transfer it to a non-const string*/
     workString = (char*)memcpy(holdDate, tempString, strlen(tempString));
 
-    //get the necessary date
+    /**get the necessary date*/
     year = atoi((const char*)strtok(workString, "- ")) + 1;
     month = atoi((const char*)strtok(NULL, "- "));
     day = 1;
 
-    //transfer that date to another string.
+    /**transfer that date to another string.*/
     sprintf(holdDate, "%d-%d-%d\n", year, month, day);
 
-    //Save it to the file.
+    /**Save it to the file.*/
     tempNode = Node->FirstChildElement("holddate");
     tempNode->ToElement()->SetText((const char*)holdDate);
 
 }
 
+/** A function that iterates over all the orders. */
 void scanFile(tinyxml2::XMLDocument *myDoc) {
     tinyxml2::XMLNode *myNode = myDoc->FirstChild()->FirstChild();
 
@@ -245,6 +254,7 @@ void scanFile(tinyxml2::XMLDocument *myDoc) {
 
 }
 
+/** A simple function to test whether a function exists or not */
 bool fexists(const char *filename)
 {
   ifstream ifile(filename);
@@ -257,7 +267,9 @@ int main() {
     tinyxml2::XMLDocument myDoc;
     char filename[200];
 
+    /** Infinite loop! These are usually a bad thing, so if you think of a better way, tell me! */
     while(true) {
+        /** Lets make it sleep so that it does use a huge amount of processing power.*/
         Sleep(1000);
         time(&rawtime);
         timeinfo = localtime(&rawtime);
